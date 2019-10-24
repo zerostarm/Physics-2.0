@@ -6,6 +6,7 @@ import pygame as pg, os
 from src.display.tkinter_windows import create_menu
 from src.core import constants
 from numpy.matlib import rand
+import numpy as np
 
 
 
@@ -27,7 +28,10 @@ def refresh_display(settings_window, screen, bodies, cam):
     for b in bodies:
         # Calculate coordinates and radius adjusted for camera
         x, y = (b.position - cam.position - cam.dims / 2) * cam.scale + cam.dims / 2
-        pg.draw.circle(screen, b.color, (int(x), int(y)), int(b.radius * cam.scale), 0)
+        try:
+            pg.draw.circle(screen, b.color, (np.int64(x), np.int64(y)), np.int64(b.radius * cam.scale), 0)
+        except:
+            pass
         # The radius should be calculated in such a way that the camera can be zoomed indefinitely.
         # Currently, the properties of an object can reach a distinct threshold, after which they become invisible.
     pg.display.update()

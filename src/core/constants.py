@@ -11,4 +11,4 @@ Density = 0.1
 COR = 1.0  # Coefficient of Restitution
 
 # Set simulation hard clock speed (fps)
-clock_speed = 144
+clock_speed = 60

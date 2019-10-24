@@ -5,8 +5,17 @@ class Body:
     def __init__(self, mass, position, velocity, density=Density, color=None, name=None, charge=0):
         self.mass, self.density, self.radius, self.color, self.name = mass, density, int((mass / density) ** (1 / 3)), color if color else tuple(randint(0, 255) for _ in '111'), name
         self.position, self.velocity, self.acceleration = V2(position), V2(velocity), V2(0, 0)
-        self.charge = random.randint(-1,1,1)
-
+        self.charge = random.randint(-1,2,1)
+        
+        if self.charge == -1:
+            self.color = (0,0,255)
+        elif self.charge == 0:
+            self.color = (0,255,0)
+        elif self.charge == 1:
+            self.color = (255,0,0)
+        else:
+            self.color = (0,0,0)
+        
     def __repr__(self):
         return self.name if self.name else "Unnamed Body"
 
@@ -19,17 +28,18 @@ class Body:
     def force_of(self, other, G):
         d = other.position - self.position
         r = d.length()
-        return G / r ** 3 * d + K*self.charge*other.charge/r**3 *d * self.mass  if r else V2(0, 0) 
+        return  G*other.mass / r ** 3 * d -K*self.charge*other.charge/r**3 * d/ self.mass if r else V2(0, 0) # 
 
     def test_collision(self, other):
         return self.position.distance_to(other.position) < self.radius + other.radius  # Zero-tolerance collision
 
     def merge(self, other, prop_wins):  # Special case: perfectly inelastic collision results in merging of the two bodies
-        m, m2, v, v2, x, x2 = self.mass, other.mass, self.velocity, other.velocity, self.position, other.position;
+        m, m2, v, v2, x, x2, c1, c2 = self.mass, other.mass, self.velocity, other.velocity, self.position, other.position, self.charge, other.charge;
         M = m + m2
         self.position, self.velocity, self.mass, self.radius, self.color = (x * m + x2 * m2) / M, (v * m + v2 * m2) / M, M, int((M * M / (self.density * m + other.density * m2)) ** (1 / 3)), tuple(
             ((self.color[x] * m + other.color[x] * m2) / M) for x in (0, 1, 2))
         self.density = M / self.radius ** 3
+        self.charge = (c1+c2)/2
         # Check to see if the deleted body belongs to a properties window; If so, set win.body to the combined body
         for win in prop_wins:
             if win.body is self:
