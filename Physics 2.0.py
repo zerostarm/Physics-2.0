@@ -5,6 +5,8 @@ import pygame as pg, os
 
 from src.display.tkinter_windows import create_menu
 from src.core import constants
+from numpy.matlib import rand
+
 
 
 def init_display():
@@ -182,7 +184,7 @@ def main():
         scroll.update_value()
 
     pg.quit()
-    if settings_window.alive: settings_window.destroy()
+    if settings_window.alive: settings_window.destroy(), self.destroy()
 
 
 if __name__ == "__main__":

@@ -4,6 +4,8 @@ from math import hypot, pi, sin, cos, sqrt
 
 G = 0.5
 
+K = 9*10**9
+
 Density = 0.1
 
 COR = 1.0  # Coefficient of Restitution
