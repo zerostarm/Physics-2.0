@@ -28,6 +28,7 @@ def refresh_display(settings_window, screen, bodies, cam):
     for b in bodies:
         # Calculate coordinates and radius adjusted for camera
         x, y = (b.position - cam.position - cam.dims / 2) * cam.scale + cam.dims / 2
+        b.update_radius()
         try:
             pg.draw.circle(screen, b.color, (np.int64(x), np.int64(y)), np.int64(b.radius * cam.scale), 0)
         except:
@@ -105,11 +106,11 @@ def handle_bodies(*args):
                     bodies[o].merge(bodies[b], settings_window.properties_windows)
                     bodies.pop(b)
                     break
-                bodies[o].collide(bodies[b], COR)
+                bodies[o].collide(bodies[b], COR, settings_window.properties_windows)
             if gravity:
                 force = body.force_of(bodies[o], G)  # This is a misnomer; `force` is actually acceleration / mass
-                body.acceleration += bodies[o].mass * force
-                bodies[o].acceleration -= body.mass * force
+                body.acceleration += bodies[o].mass0 * force
+                bodies[o].acceleration -= body.mass0 * force
         body.acceleration.y += G / 50 * g_field  # Uniform gravitational field
         body.apply_motion(time_factor)
         body.position += scroll.val
@@ -125,7 +126,10 @@ def handle_bodies(*args):
             for i in 0, 1:
                 x = d[i]  # x is the dimension (x,y) currently being tested / edited
                 if x <= r or x >= dims[i] - r:
-                    body.velocity[i] *= -COR  # Reflect the perpendicular velocity
+                    if COR == 0:
+                        body.velocity[i] *= -1  # Reflect the perpendicular velocity when merge and walls
+                    else :
+                        body.velocity[i] *= -COR # Reflect the perpendicular velocity when not merge and walls
                     body.position[i] = (2 * (x < r) - 1) * (r - dims[i] / 2) / camera.scale + dims[i] / 2 + \
                                        camera.position[i]  # Place body back into frame
 

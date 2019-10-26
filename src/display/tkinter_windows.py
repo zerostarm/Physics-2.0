@@ -61,7 +61,7 @@ class Menu:
 class CreateSystem(Menu):
     def create_root(self):
         self.root = tk.Toplevel()
-        self.choices = {"System": ("Unary", "Binary", "Cluster"), "Gradient": ("Density", "Diffusion")}
+        self.choices = {"System": ("Unary", "Binary", "Cluster"), "Gradient": ("Density", "Diffusion"), "Dots": ("Radius", "Mass", "Number of Dots", "Density")}
 
     def configure(self, parent):
         self.parent, d = parent, list(self.choices.keys())[0]

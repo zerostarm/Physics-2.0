@@ -1,4 +1,5 @@
 from .bodies import *
+from sympy.physics.mechanics.tests.test_system import bodies
 
 
 class Preset:
@@ -25,6 +26,20 @@ class Gradient(Preset):
                  (uniform(-1, 1), uniform(-1, 1)), densities[y], self.colors[y]) for _ in range(self.num // 2) for y in
                 (0, 1)]
 
+class nDots(Preset):
+    def extra_args(self, radius, mass, n = 1, planet_density=Density):
+        self.number = n
+        self.mass = mass
+        self.radius = radius
+        self.density = planet_density
+    
+    def Dots(self):
+        bodies = []
+        theta = int( 360 / n )
+        for x in self.n:
+            position = self.radius * ( cos( theta * n ) , sin( theta * n ) )
+            velocity = (0,0)
+            bodies.append((self.mass, position, velocity, self.density, None, "Planet " + str(x)))
 
 class System(Preset):
     def extra_args(self, dist_range, planet_density=Density):
