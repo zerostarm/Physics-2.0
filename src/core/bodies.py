@@ -16,6 +16,8 @@ class Body:
         self.velocity = V2(velocity)
         self.currentVelocity = V2(velocity)
         self.acceleration =  V2(0, 0)
+        self.Gacceleration = V2(0,0)
+        self.Cacceleration = V2(0,0)
         
         self.charge = random.choice([self.mass0,-self.mass0,0])
         
@@ -40,10 +42,18 @@ class Body:
     def force_of(self, other, G):
         d = other.position - self.position
         r = d.length()
+        
         Gravitational = G*other.mass0 / r ** 3 * d  if r else V2(0, 0) #Need if r else V2(0,0) for ALL forces
         Coulombic = K*self.charge*other.charge/r**3 * d / self.mass0  if r else V2(0, 0)
-        return Gravitational + Coulombic # 
-
+        araw = Gravitational + Coulombic
+        
+        gammav = 1 / abs( cmath.sqrt( 1 - ( self.currentVelocity.length() / C )**2 ) ) 
+        aparallele = self.velocity.dot(araw)/self.velocity.dot(self.velocity) * self.velocity if self.velocity else V2(0,0)
+        aperpendicular = self.velocity - aparallele
+        atotal = gammav**3*aparallele + gammav*aperpendicular # Special Relativistic stuff
+        
+        return atotal
+    
     def test_collision(self, other):
         return self.position.distance_to(other.position) < min(self.radius,other.radius)  # Zero-tolerance collision
 
@@ -95,18 +105,12 @@ class Body:
         other.position += offset / 2
 
     def update_radius(self):
-        self.radius = int((self.mass / self.density) ** (1 / 3))
+        self.radius = (self.mass / self.density) ** (1 / 3)
 
     def apply_motion(self, time_factor):
         self.currentVelocity = self.velocity
         
         gammav = 1 / abs( cmath.sqrt( 1 - ( self.currentVelocity.length() / C )**2 ) )
-        
-        a1 = self.acceleration / ( gammav ** 2 * ( 1 + ( self.currentVelocity.length() / C ) ** 2 ) )
-        a2 = -self.acceleration.dot( self.currentVelocity ) * self.currentVelocity * ( gammav - 1 ) / ( self.currentVelocity.length() ** 2 * gammav ** 3 * ( 1 
-            + ( self.currentVelocity.length() / C ) ** 2 ) ** 3 ) if cmath.isclose( self.currentVelocity.length() , 0 , rel_tol = 1e-15 ) & cmath.isclose( self.acceleration.length() , 0 , rel_tol = 1e-15 ) else V2(0,0)
-        a3 = self.acceleration.dot( self.currentVelocity ) * self.currentVelocity / ( C ** 2 * gammav ** 2 * ( 1 + ( self.currentVelocity.length() / C ) ** 2 ) ** 3 )      
-        self.acceleration = a1 + a2 + a3
         
         self.velocity += self.acceleration * time_factor
         self.velocity = self.velocity / abs( cmath.sqrt( 1 - ( self.velocity.length() / C ) ** 2 ) )
