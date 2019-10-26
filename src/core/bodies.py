@@ -15,17 +15,19 @@ class Body:
         self.position = V2(position) 
         self.velocity = V2(velocity)
         self.currentVelocity = V2(velocity)
-        self.acceleration =  V2(0, 0)
-        self.Gacceleration = V2(0,0)
-        self.Cacceleration = V2(0,0)
+        self.acceleration = V2(0, 0)
         
-        self.charge = random.choice([self.mass0,-self.mass0,0])
+        #self.charge = random.randint(-self.mass0, self.mass0)
+        if name == "Star":
+            self.charge = self.mass
+        else:
+            self.charge = -self.mass
         
-        if self.charge == -self.mass0:
+        if self.charge < 0 :
             self.color = (0,0,255)
         elif self.charge == 0:
             self.color = (0,255,0)
-        elif self.charge == self.mass0:
+        elif self.charge > 0:
             self.color = (255,0,0)
         else:
             self.color = (0,0,0)
@@ -51,11 +53,11 @@ class Body:
         aparallele = self.velocity.dot(araw)/self.velocity.dot(self.velocity) * self.velocity if self.velocity else V2(0,0)
         aperpendicular = self.velocity - aparallele
         atotal = gammav**3*aparallele + gammav*aperpendicular # Special Relativistic stuff
-        
+        #self.acceleration = atotal
         return atotal
     
     def test_collision(self, other):
-        return self.position.distance_to(other.position) < min(self.radius,other.radius)  # Zero-tolerance collision
+        return self.position.distance_to(other.position) < self.radius + other.radius  # Zero-tolerance collision
 
     def merge(self, other, prop_wins):  # Special case: perfectly inelastic collision results in merging of the two bodies
         m = self.mass0 
