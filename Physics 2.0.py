@@ -179,7 +179,7 @@ def main():
 
     settings_window, clock, done, frame_count = create_menu("Settings", bodies, camera, dims,
                                                             [constants.G, constants.COR]), pg.time.Clock(), False, 0
-
+                        
     while not done:
         clock.tick(constants.clock_speed)
         frame_count += 1

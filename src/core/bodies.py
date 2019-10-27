@@ -17,12 +17,12 @@ class Body:
         self.currentVelocity = V2(velocity)
         self.acceleration = V2(0, 0)
         
-        #self.charge = random.randint(-self.mass0, self.mass0)
-        if name == "Star":
+        self.charge = random.randint(-self.mass0, self.mass0)
+        '''if name == "Star":
             self.charge = self.mass
         else:
-            self.charge = -self.mass
-        
+            self.charge = 1
+        '''
         if self.charge < 0 :
             self.color = (0,0,255)
         elif self.charge == 0:
@@ -45,14 +45,16 @@ class Body:
         d = other.position - self.position
         r = d.length()
         
-        Gravitational = G*other.mass0 / r ** 3 * d  if r else V2(0, 0) #Need if r else V2(0,0) for ALL forces
-        Coulombic = K*self.charge*other.charge/r**3 * d / self.mass0  if r else V2(0, 0)
+        Gravitational = G * other.mass0 / r ** 3 * d  if r else V2(0, 0) #Need if r else V2(0,0) for ALL forces
+        Coulombic = K * self.charge * other.charge / r ** 3 * d / self.mass0  if r else V2(0, 0)
         araw = Gravitational + Coulombic
         
-        gammav = 1 / abs( cmath.sqrt( 1 - ( self.currentVelocity.length() / C )**2 ) ) 
-        aparallele = self.velocity.dot(araw)/self.velocity.dot(self.velocity) * self.velocity if self.velocity else V2(0,0)
+        self.currentVelocity = self.velocity
+        gammav = 1 / abs( cmath.sqrt( 1 - ( self.currentVelocity.length() / C ) ** 2 ) ) 
+        
+        aparallele = self.velocity.dot( araw ) / self.velocity.dot( self.velocity ) * self.velocity if self.velocity else V2( 0 , 0 )
         aperpendicular = self.velocity - aparallele
-        atotal = gammav**3*aparallele + gammav*aperpendicular # Special Relativistic stuff
+        atotal = gammav ** 3 * aparallele + gammav * aperpendicular # Special Relativistic stuff
         #self.acceleration = atotal
         return atotal
     
@@ -61,7 +63,9 @@ class Body:
 
     def merge(self, other, prop_wins):  # Special case: perfectly inelastic collision results in merging of the two bodies
         m = self.mass0 
-        m2 = other.mass0 
+        mp = self.mass
+        m2 = other.mass0
+        mp2 = other.mass 
         v = self.velocity 
         v2 = other.velocity 
         x = self.position
@@ -69,14 +73,17 @@ class Body:
         c1 = self.charge
         c2 = other.charge
         
-        M = m + m2
         
-        self.position = (x * m + x2 * m2) / M
-        self.velocity = (v * m + v2 * m2) / M
+        M = m + m2
+        Mp = mp + mp2
+        
+        self.position = (x * mp + x2 * mp2) / Mp
+        self.velocity = (v * mp + v2 * mp2) / Mp
+        self.currentVelocity = ( self.velocity * m + other.velocity * m2 ) / M
         self.mass0 = M
-        self.mass = M/abs(cmath.sqrt(1 - (self.currentVelocity.length()/C)**2))
-        self.radius = int((self.mass0**2 / (self.density * m + other.density * m2)) ** (1 / 3))
-        self.color = tuple( ( ( self.color[x] * m + other.color[x] * m2 ) / M ) for x in (0, 1, 2) )
+        self.mass = M / abs( cmath.sqrt( 1 - ( self.currentVelocity.length() / C ) ** 2 ) )
+        self.radius = int( ( self.mass0 ** 2 / ( self.density * m + other.density * m2 ) ) ** (1 / 3) )
+        self.color = tuple( ( ( self.color[x] * mp + other.color[x] * mp2 ) / Mp ) for x in (0, 1, 2) )
         
         self.density = self.mass0 / self.radius ** 3
         
@@ -114,14 +121,15 @@ class Body:
         
         gammav = 1 / abs( cmath.sqrt( 1 - ( self.currentVelocity.length() / C )**2 ) )
         
-        self.velocity += self.acceleration * time_factor
-        self.velocity = self.velocity / abs( cmath.sqrt( 1 - ( self.velocity.length() / C ) ** 2 ) )
+        self.velocity += self.acceleration * time_factor / abs( cmath.sqrt( 1 + ( self.acceleration.length() * time_factor / C ) ** 2 ) ) if self.acceleration else V2(0,0)
         
         self.position += self.velocity * time_factor 
         
         self.mass = self.mass0 / abs( cmath.sqrt( 1 - ( self.currentVelocity.length() / C ) ** 2 ) )
         
         self.update_radius()
+        if self.name == "Star":
+            print(self.velocity, self.acceleration, self.mass, self.radius)
         
 
 

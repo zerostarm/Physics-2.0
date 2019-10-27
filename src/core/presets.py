@@ -40,7 +40,7 @@ class System(Preset):
         return bodies
 
     def Unary(self, star_mass, star_density, circular=True):
-        bodies = [(star_mass, (self.width / 2, self.height / 2), (0, 0), star_density, (255, 255, 0), "Star")]
+        bodies = [(star_mass, (self.width / 2, self.height / 2), (1e-20, 1e-20), star_density, (255, 255, 0), "Star")]
         for x in range(self.num):
             mass = uniform(*self.m_range)
             distance = uniform(*self.d_range)
