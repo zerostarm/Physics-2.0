@@ -79,7 +79,7 @@ class Body:
         
         self.position = (x * mp + x2 * mp2) / Mp
         self.velocity = (v * mp + v2 * mp2) / Mp
-        self.currentVelocity = ( self.velocity * m + other.velocity * m2 ) / M
+        self.currentVelocity = ( self.velocity * m + other.velocity * m2 ) / M / abs( cmath.sqrt( 1 - self.velocity * other.velocity / C ** 2 ) )
         self.mass0 = M
         self.mass = M / abs( cmath.sqrt( 1 - ( self.currentVelocity.length() / C ) ** 2 ) )
         self.radius = int( ( self.mass0 ** 2 / ( self.density * m + other.density * m2 ) ) ** (1 / 3) )
@@ -123,14 +123,17 @@ class Body:
         
         self.velocity += self.acceleration * time_factor / abs( cmath.sqrt( 1 + ( self.acceleration.length() * time_factor / C ) ** 2 ) ) if self.acceleration else V2(0,0)
         
-        self.position += self.velocity * time_factor 
+        self.velocity = self.velocity / abs( cmath.sqrt( 1 - ( self.velocity.length() / C )**2 ) )
         
-        self.mass = self.mass0 / abs( cmath.sqrt( 1 - ( self.currentVelocity.length() / C ) ** 2 ) )
+        self.position += self.velocity * time_factor / abs( cmath.sqrt( 1 - ( self.velocity.length() / C )**2 ) )
+        
+        self.mass = self.mass0 / abs( cmath.sqrt( 1 - ( self.velocity.length() / C ) ** 2 ) )
         
         self.update_radius()
-        if self.name == "Star":
-            print(self.velocity, self.acceleration, self.mass, self.radius)
         
+        if self.name == "Star":
+            #print(self.velocity, self.acceleration, self.mass, self.mass0, self.radius)
+            print(self.velocity.length(), self.mass, self.radius)
 
 
 def generate_bodies(body_args_list):

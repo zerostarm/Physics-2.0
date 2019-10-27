@@ -265,7 +265,7 @@ class BodyProperties(Menu):
         self.body = body
         self.root.title(self.body.name.title() if self.body.name else "Unnamed Body")
 
-        self.createLabelSlider('Mass: ', 'mass_slider', self.root, 1, 1, self.body.mass * 10, 100, self.body.mass, 1)
+        self.createLabelSlider('Mass: ', 'mass_slider', self.root, 1, 1, self.body.mass0 * 10, 100, self.body.mass0, 1)
         self.createLabelSlider('Density: ', 'density_slider', self.root, 2, .01, self.body.density * 10, 100,
                                self.body.density, .01)
         self.createBoolean('Velocity', 'velocity', self.root, 3, 0, 0, 1, 1)
@@ -307,8 +307,8 @@ class BodyProperties(Menu):
         self.canvas.grid(row=3, column=1, rowspan=2, columnspan=4)
 
     def merge(self):
-        self.mass_slider.set(self.body.mass)
-        self.mass_slider.config(to=self.body.mass * 10)
+        self.mass_slider.set(self.body.mass0)
+        self.mass_slider.config(to=self.body.mass0 * 10)
         self.density_slider.set(self.body.density)
         self.density_slider.config(to=self.body.density * 10)
 

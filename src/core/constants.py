@@ -4,9 +4,9 @@ from math import hypot, pi, sin, cos, sqrt
 
 G = .5
 
-K = 0 #this is anoyingly correct - 9*10**9
+K = 10 #this is anoyingly correct - 9*10**9
 
-C = 50
+C = 60
 
 Density = 0.1
 
