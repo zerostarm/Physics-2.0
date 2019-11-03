@@ -6,7 +6,7 @@ G = .5
 
 K = 10 #this is anoyingly correct - 9*10**9
 
-C = 60
+C = .1
 
 Density = 0.1
 

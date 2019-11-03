@@ -17,11 +17,16 @@ class Body:
         self.currentVelocity = V2(velocity)
         self.acceleration = V2(0, 0)
         
-        self.charge = random.randint(-self.mass0, self.mass0)
+        self.charge = charge
+        
+        #self.charge = random.randint(-self.mass0, self.mass0)
         '''if name == "Star":
-            self.charge = self.mass
+            #self.charge = self.mass
+            self.mass0 = 1.9885e30
+            self.density = 
         else:
-            self.charge = 1
+            #self.charge = 1
+            self.mass0 = mass
         '''
         if self.charge < 0 :
             self.color = (0,0,255)
@@ -52,9 +57,9 @@ class Body:
         self.currentVelocity = self.velocity
         gammav = 1 / abs( cmath.sqrt( 1 - ( self.currentVelocity.length() / C ) ** 2 ) ) 
         
-        aparallele = self.velocity.dot( araw ) / self.velocity.dot( self.velocity ) * self.velocity if self.velocity else V2( 0 , 0 )
-        aperpendicular = self.velocity - aparallele
-        atotal = gammav ** 3 * aparallele + gammav * aperpendicular # Special Relativistic stuff
+        avelocity = gammav ** 3 / C ** 2 * self.velocity.dot(araw) * self.velocity if self.velocity else V2(0,0) #From https://en.wikipedia.org/wiki/Relativistic_mechanics#Force open the derivation of the force and this is what it starts as, but i split it up some
+        aacceleration = gammav * araw 
+        atotal = avelocity + aacceleration
         #self.acceleration = atotal
         return atotal
     
@@ -121,9 +126,9 @@ class Body:
         
         gammav = 1 / abs( cmath.sqrt( 1 - ( self.currentVelocity.length() / C )**2 ) )
         
-        self.velocity += self.acceleration * time_factor / abs( cmath.sqrt( 1 + ( self.acceleration.length() * time_factor / C ) ** 2 ) ) if self.acceleration else V2(0,0)
-        
-        self.velocity = self.velocity / abs( cmath.sqrt( 1 - ( self.velocity.length() / C )**2 ) )
+        tempAccell = self.acceleration * time_factor / abs( cmath.sqrt( 1 + ( self.acceleration.length() * time_factor / C ) ** 2 ) ) if self.acceleration else V2(0,0)
+        self.velocity += tempAccell
+        self.velocity = self.velocity / abs( cmath.sqrt( 1 - ( self.velocity.length() / C )**2 ) ) if self.acceleration else self.velocity
         
         self.position += self.velocity * time_factor / abs( cmath.sqrt( 1 - ( self.velocity.length() / C )**2 ) )
         
@@ -131,10 +136,10 @@ class Body:
         
         self.update_radius()
         
-        if self.name == "Star":
-            #print(self.velocity, self.acceleration, self.mass, self.mass0, self.radius)
+        '''if self.name == "Star":
+            print(self.velocity, self.acceleration, self.mass, self.mass0, self.radius)
             print(self.velocity.length(), self.mass, self.radius)
-
+        '''
 
 def generate_bodies(body_args_list):
     return list(map(lambda args2: Body(*args2), body_args_list))
