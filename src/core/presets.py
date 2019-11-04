@@ -1,4 +1,6 @@
 from .bodies import *
+from .constants import *
+import cmath
 
 
 class Preset:
@@ -47,7 +49,7 @@ class System(Preset):
             angle = uniform(-pi, pi)
             position = (self.width / 2 + distance * cos(angle), self.height / 2 - distance * sin(angle))
             if circular:
-                speed = sqrt(star_mass * G / distance)
+                speed = sqrt(star_mass * G * K / (C * distance))*C
                 velocity = (speed * sin(angle), speed * cos(angle))
             else:
                 velocity = (uniform(-2, 2), uniform(-2, 2))

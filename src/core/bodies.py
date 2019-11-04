@@ -19,7 +19,7 @@ class Body:
         
         self.charge = charge
         
-        #self.charge = random.randint(-self.mass0, self.mass0)
+        self.charge = random.randint(-self.mass0, self.mass0)
         '''if name == "Star":
             #self.charge = self.mass
             self.mass0 = 1.9885e30
@@ -51,7 +51,7 @@ class Body:
         r = d.length()
         
         Gravitational = G * other.mass0 / r ** 3 * d  if r else V2(0, 0) #Need if r else V2(0,0) for ALL forces
-        Coulombic = K * self.charge * other.charge / r ** 3 * d / self.mass0  if r else V2(0, 0)
+        Coulombic = - K * self.charge * other.charge / r ** 3 * d / self.mass0  if r else V2(0, 0)
         araw = Gravitational + Coulombic
         
         self.currentVelocity = self.velocity
