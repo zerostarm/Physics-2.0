@@ -1,9 +1,10 @@
 from .constants import *
 from numpy import random
 import cmath
+from sympy.stats.rv import density
 
 class Body:
-    def __init__(self, mass, position, velocity, density=Density, color=None, name=None, charge=0):
+    def __init__(self, mass, position, velocity, density=Density, color=None, name=None, charge=None):
         self.mass = mass 
         self.mass0 = mass
         self.density = density
@@ -18,8 +19,8 @@ class Body:
         self.acceleration = V2(0, 0)
         
         self.charge = charge
-        
-        self.charge = random.randint(-self.mass0, self.mass0)
+        if self.charge == None:
+            self.charge = random.randint(-self.mass0, self.mass0)
         '''if name == "Star":
             #self.charge = self.mass
             self.mass0 = 1.9885e30
@@ -117,10 +118,29 @@ class Body:
         offset = (self.radius + other.radius - (x2 - x).length()) * n
         self.position -= offset / 2
         other.position += offset / 2
-
+        
+    def split(self, specialmass, x):
+        mass0 = ( self.mass0 - specialmass ) * 2 / 3
+        position = self.position + self.radius * 3 / 2 * V2(self.velocity[1] / self.velocity.length() , - self.velocity[0] / self.velocity.length() ) if self.velocity.length() else V2(1,1) * self.radius * 3 / 2
+        velocity = self.velocity * ( self.mass0 ) / ( 2 * mass0 )
+        density = self.density
+        charge = self.charge * ( self.mass0 ) / ( 2 * mass0 )
+        
+        self.velocity = self.velocity * self.mass0 / (2 * ( self.mass0 - mass0 ) )
+        self.charge = self.charge * self.mass0 / (2 * ( self.mass0 - mass0 ) )
+        self.mass0 = self.mass0 - mass0
+        self.position = self.position - self.radius * 3 / 2 * V2(self.velocity[1] / self.velocity.length() , - self.velocity[0] / self.velocity.length() ) if self.velocity.length() else V2(-1,-1) * self.radius * 3 / 2
+        self.density = self.density
+        
+        
+        return Body(mass0, position, velocity, self.density, None, "Planet " + str(x), charge = charge)
+        
     def update_radius(self):
         self.radius = (self.mass / self.density) ** (1 / 3)
-
+    
+    def get_mass0(self):
+        return self.mass0
+    
     def apply_motion(self, time_factor):
         self.currentVelocity = self.velocity
         

@@ -7,7 +7,7 @@ from src.display.tkinter_windows import create_menu
 from src.core import constants
 from numpy.matlib import rand
 import numpy as np
-
+import random
 
 
 def init_display():
@@ -132,7 +132,10 @@ def handle_bodies(*args):
                         body.velocity[i] *= -COR # Reflect the perpendicular velocity when not merge and walls
                     body.position[i] = (2 * (x < r) - 1) * (r - dims[i] / 2) / camera.scale + dims[i] / 2 + \
                                        camera.position[i]  # Place body back into frame
-
+        if bodies[b].get_mass0() > 1000 and random.randint(0,999) <= 0:
+            #print(bodies)
+            bodies.append(bodies[b].split(1000, len(bodies) + 1))
+            
 
 class Scroll:
     def __init__(self):
