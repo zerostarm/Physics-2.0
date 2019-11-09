@@ -4,10 +4,11 @@ from pygame.math import Vector2 as V2
 import pygame as pg, os
 
 from src.display.tkinter_windows import create_menu
-from src.core import constants
+from src.core import *
 from numpy.matlib import rand
 import numpy as np
 import random
+
 
 
 def init_display():
@@ -95,46 +96,57 @@ def handle_events(*args):
 
 def handle_bodies(*args):
     G, COR, time_factor, collision, walls, g_field, gravity, scroll, bodies, camera, dims, frame_count, settings_window = args
-
-    for body in bodies:  # Reset previous calculations
-        body.acceleration = V2(0, 0)
-
-    for b, body in enumerate(bodies):  # Calculate forces and set acceleration, if mutual gravitation is enabled
-        for o in range(len(bodies) - 1, b, -1):
-            if collision and bodies[o].test_collision(body):
-                if not COR:  # Only remove second body if collision is perfectly inelastic
-                    bodies[o].merge(bodies[b], settings_window.properties_windows)
-                    bodies.pop(b)
-                    break
-                bodies[o].collide(bodies[b], COR, settings_window.properties_windows)
-            if gravity:
-                force = body.force_of(bodies[o], G)  # This is a misnomer; `force` is actually acceleration / mass
-                body.acceleration += bodies[o].mass0 * force
-                bodies[o].acceleration -= body.mass0 * force
-        body.acceleration.y += G / 50 * g_field  # Uniform gravitational field
-        body.apply_motion(time_factor)
-        body.position += scroll.val
-        if not frame_count % 100 and body.position.length() > 100000:  # TODO: find a good value from this boundary
-            bodies.remove(body)
-            for window in settings_window.properties_windows:
-                if window.body is body:
-                    settings_window.properties_windows.remove(window)
-                    window.destroy()
-                    break
-        if walls:  # Wall collision
-            d, r = ((body.position - camera.position) - dims / 2) * camera.scale + dims / 2, body.radius * camera.scale
-            for i in 0, 1:
-                x = d[i]  # x is the dimension (x,y) currently being tested / edited
-                if x <= r or x >= dims[i] - r:
-                    if COR == 0:
-                        body.velocity[i] *= -1  # Reflect the perpendicular velocity when merge and walls
-                    else :
-                        body.velocity[i] *= -COR # Reflect the perpendicular velocity when not merge and walls
-                    body.position[i] = (2 * (x < r) - 1) * (r - dims[i] / 2) / camera.scale + dims[i] / 2 + \
-                                       camera.position[i]  # Place body back into frame
-        if bodies[b].get_mass0() > 1000 and random.randint(0,999) <= 0:
-            #print(bodies)
-            bodies.append(bodies[b].split(1000, len(bodies) + 1))
+    
+    if time_factor != 0:
+        for body in bodies:  # Reset previous calculations
+            body.acceleration = V2(0, 0)
+        
+        for b, body in enumerate(bodies):  # Calculate forces and set acceleration, if mutual gravitation is enabled
+            for o in range(len(bodies) - 1, b, -1):
+                if collision and bodies[o].test_collision(body):
+                    if not COR:  # Only remove second body if collision is perfectly inelastic
+                        if bodies[b].mass0 < constants.mergePercent*bodies[o].mass0 or bodies[o].mass0 < constants.mergePercent*bodies[b].mass0:
+                            bodies[o].merge(bodies[b], settings_window.properties_windows)
+                            bodies.pop(b)
+                        else:
+                            subcor = bodies[b].mass0 / bodies[o].mass0 if bodies[o].mass0 > bodies[b].mass0 else bodies[o].mass0 / bodies[b].mass0
+                            bodies[o].collide(bodies[b], subcor, settings_window.properties_windows)
+                        break
+                    bodies[o].collide(bodies[b], COR, settings_window.properties_windows)
+                if gravity:
+                    force = body.force_of(bodies[o], G)  # This is a misnomer; `force` is actually acceleration / mass
+                    body.acceleration += bodies[o].mass0 * force
+                    bodies[o].acceleration -= body.mass0 * force
+            body.acceleration.y += G / 50 * g_field  # Uniform gravitational field
+            body.apply_motion(time_factor)
+            body.position += scroll.val
+            if not frame_count % 100 and body.position.length() > 100000:  # TODO: find a good value from this boundary
+                bodies.remove(body)
+                for window in settings_window.properties_windows:
+                    if window.body is body:
+                        settings_window.properties_windows.remove(window)
+                        window.destroy()
+                        break
+            if walls:  # Wall collision
+                d, r = ((body.position - camera.position) - dims / 2) * camera.scale + dims / 2, body.radius * camera.scale
+                for i in 0, 1:
+                    x = d[i]  # x is the dimension (x,y) currently being tested / edited
+                    if x <= r or x >= dims[i] - r:
+                        if COR == 0:
+                            body.velocity[i] *= -1  # Reflect the perpendicular velocity when merge and walls
+                        else :
+                            body.velocity[i] *= -COR # Reflect the perpendicular velocity when not merge and walls
+                        body.position[i] = (2 * (x < r) - 1) * (r - dims[i] / 2) / camera.scale + dims[i] / 2 + \
+                                           camera.position[i]  # Place body back into frame
+            
+            specmass = bodies[b].get_mass0() - abs(bodies[b].get_charge())**2
+            if specmass < 0  and random.randint(0, constants.decayConstant) <= constants.decayConstantN:
+                #print(str(bodies[b].get_mass0()) + " " + str(abs(bodies[b].get_charge())))
+                splitter = bodies[b].split(specmass, len(bodies) + 1, settings_window.properties_windows)
+                if  splitter.get_mass0()== 0:
+                    continue
+                else:
+                    bodies.append(splitter)
             
 
 class Scroll:

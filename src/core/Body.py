@@ -1,7 +1,7 @@
 from .constants import *
 from numpy import random
 import cmath
-from sympy.stats.rv import density
+
 
 class Body:
     def __init__(self, mass, position, velocity, density=Density, color=None, name=None, charge=None):
@@ -19,16 +19,12 @@ class Body:
         self.acceleration = V2(0, 0)
         
         self.charge = charge
+        
         if self.charge == None:
             self.charge = random.randint(-self.mass0, self.mass0)
-        '''if name == "Star":
-            #self.charge = self.mass
-            self.mass0 = 1.9885e30
-            self.density = 
-        else:
-            #self.charge = 1
-            self.mass0 = mass
-        '''
+        if name == "Star":
+            self.charge = -self.mass0 
+
         if self.charge < 0 :
             self.color = (0,0,255)
         elif self.charge == 0:
@@ -91,9 +87,14 @@ class Body:
         self.radius = int( ( self.mass0 ** 2 / ( self.density * m + other.density * m2 ) ) ** (1 / 3) )
         self.color = tuple( ( ( self.color[x] * mp + other.color[x] * mp2 ) / Mp ) for x in (0, 1, 2) )
         
-        self.density = self.mass0 / self.radius ** 3
+        self.density = self.mass0 / self.radius ** 3 if self.radius else .1
         
-        self.charge = (c1+c2)
+        self.charge = c1+c2
+        
+        '''print(str(other.name) + " " + str(other.mass0) + " " + str(other.charge))
+        print(str(self.name) + " " + str(m) + " " + str(c1))
+        print(str(self.name) + " " + str(self.mass0) + " " + str(self.charge))
+        '''
         
         # Check to see if the deleted body belongs to a properties window; If so, set win.body to the combined body
         for win in prop_wins:
@@ -119,20 +120,53 @@ class Body:
         self.position -= offset / 2
         other.position += offset / 2
         
-    def split(self, specialmass, x):
-        mass0 = ( self.mass0 - specialmass ) * 2 / 3
-        position = self.position + self.radius * 3 / 2 * V2(self.velocity[1] / self.velocity.length() , - self.velocity[0] / self.velocity.length() ) if self.velocity.length() else V2(1,1) * self.radius * 3 / 2
-        velocity = self.velocity * ( self.mass0 ) / ( 2 * mass0 )
+    def split(self, specialmass, x, prop_wins):
+        if self.mass0 ** alphaDistancePercent < abs(specialmass):
+            mass0 = 4
+            if self.charge > 0:
+                charge = 2
+            else:
+                charge = -2
+                
+            if self.mass0 <= 4:
+                return Body(0, 0, 0, 1, None, "Planet " + str(x), charge = charge)
+        else:
+            if specialmass < 0: #Beta +- Decay
+                mass0 = .5
+                if self.charge > 0:
+                    charge = 1
+                else:
+                    charge = -1
+            
+            else: # specialmass >= 0:
+                mass0 = .5
+                if self.charge > 0:
+                    charge = -1
+                else:
+                    charge = +1
+            if self.mass0 <= .5:
+                    return Body(0, 0, 0, 1, None, "Planet " + str(x), charge = charge)
+            
+        radplus = self.radius * 2 * V2(self.velocity[1] / self.velocity.length() , - self.velocity[0] / self.velocity.length() ) if self.velocity.length() !=0 else V2(1,1) * self.radius * 2
+        position = self.position + radplus
+        velocity = self.velocity * ( self.mass0 ) / ( 2 * mass0 ) if mass0 else V2(0,0)
         density = self.density
-        charge = self.charge * ( self.mass0 ) / ( 2 * mass0 )
+            
+        #print("" + str(self.mass0) + " " + str(specialmass) + " " + str(mass0) + " " + str(type(mass0)))
         
-        self.velocity = self.velocity * self.mass0 / (2 * ( self.mass0 - mass0 ) )
-        self.charge = self.charge * self.mass0 / (2 * ( self.mass0 - mass0 ) )
+        self.velocity = self.velocity * self.mass0 / (2 * ( self.mass0 - mass0 ) ) if self.mass0 - mass0 > 0 else V2(0,0)
+        self.charge = self.charge - charge
         self.mass0 = self.mass0 - mass0
-        self.position = self.position - self.radius * 3 / 2 * V2(self.velocity[1] / self.velocity.length() , - self.velocity[0] / self.velocity.length() ) if self.velocity.length() else V2(-1,-1) * self.radius * 3 / 2
+        radminus = self.radius * 2 * V2(self.velocity[1] / self.velocity.length() , - self.velocity[0] / self.velocity.length() ) if self.velocity.length() !=0 else V2(-1,-1) * self.radius * 2
+        self.position = self.position - radminus
         self.density = self.density
         
         
+        # Check to see if the deleted body belongs to a properties window; If so, set win.body to the combined body
+        for win in prop_wins:
+            if win.body is self:
+                win.merge()
+                    
         return Body(mass0, position, velocity, self.density, None, "Planet " + str(x), charge = charge)
         
     def update_radius(self):
@@ -141,6 +175,9 @@ class Body:
     def get_mass0(self):
         return self.mass0
     
+    def get_charge(self):
+        return self.charge
+    
     def apply_motion(self, time_factor):
         self.currentVelocity = self.velocity
         
@@ -148,9 +185,10 @@ class Body:
         
         tempAccell = self.acceleration * time_factor / abs( cmath.sqrt( 1 + ( self.acceleration.length() * time_factor / C ) ** 2 ) ) if self.acceleration else V2(0,0)
         self.velocity += tempAccell
-        self.velocity = self.velocity / abs( cmath.sqrt( 1 - ( self.velocity.length() / C )**2 ) ) if self.acceleration else self.velocity
-        
-        self.position += self.velocity * time_factor / abs( cmath.sqrt( 1 - ( self.velocity.length() / C )**2 ) )
+        self.velocity = self.velocity #* abs( cmath.sqrt( 1 - ( self.velocity.length() / C )**2 ) ) if self.acceleration else self.velocity
+        if self.velocity.length() >= C:
+            self.velocity = .999999999999*C * self.velocity / self.velocity.length()
+        self.position += self.velocity * time_factor * abs( cmath.sqrt( 1 - ( self.velocity.length() / C )**2 ) )
         
         self.mass = self.mass0 / abs( cmath.sqrt( 1 - ( self.velocity.length() / C ) ** 2 ) )
         

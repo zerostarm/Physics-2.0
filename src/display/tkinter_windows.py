@@ -2,8 +2,9 @@ import os, tkinter as tk
 from tkinter import filedialog, messagebox, colorchooser
 
 from .json_saving import Save, load_save
-from ..core.bodies import generate_bodies
+from ..core.Body import generate_bodies
 from ..core.presets import Gradient, System
+from ..core.constants import *
 
 
 class Menu:
@@ -266,22 +267,22 @@ class BodyProperties(Menu):
         self.root.title(self.body.name.title() if self.body.name else "Unnamed Body")
 
         self.createLabelSlider('Mass: ', 'mass_slider', self.root, 1, 1, self.body.mass0 * 10, 100, self.body.mass0, 1)
-        self.createLabelSlider('Density: ', 'density_slider', self.root, 2, .01, self.body.density * 10, 100,
-                               self.body.density, .01)
-        self.createBoolean('Velocity', 'velocity', self.root, 3, 0, 0, 1, 1)
-        self.createBoolean('Acceleration', 'acceleration', self.root, 4, 0, 0, 1, 1)
+        self.createLabelSlider('Charge: ', 'charge_slider', self.root, 2, -2*abs(self.body.charge), 2*abs(self.body.charge), 100, self.body.charge, 1)
+        self.createLabelSlider('Density: ', 'density_slider', self.root, 3, .01, self.body.density * 10, 100, self.body.density, .01)
+        self.createBoolean('Velocity', 'velocity', self.root, 4, 0, 0, 1, 1)
+        self.createBoolean('Acceleration', 'acceleration', self.root, 5, 0, 0, 1, 1)
 
-        self.canvas = tk.Canvas(self.root, width=104, height=104)
+        self.canvas = tk.Canvas(self.root, width=104, height=134)
         self.update_canvas()
 
-        tk.Button(self.root, text="Focus", command=self.focus).grid(row=5, columnspan=3)
-        tk.Button(self.root, text="Delete", command=self.delete_body).grid(row=6, columnspan=3)
+        tk.Button(self.root, text="Focus", command=self.focus).grid(row=5, columnspan=4)
+        tk.Button(self.root, text="Delete", command=self.delete_body).grid(row=6, columnspan=4)
         # TODO: Add option for tracking specific bodies
 
         self.W = 220
-        self.H = 250
+        self.H = 280
         self.root.geometry('%dx%d+%d+%d' % (self.W, self.H, self.dims[0] / 3 - 10 - self.W,
-                                            self.dims[1] * 2 / 3 - 290 + (self.H + 31) * queue_position))
+                                            self.dims[1] * 2 / 3 - 400 - (self.H + 31) * queue_position))
 
     def focus(self):
         self.camera.move_to_body(self.body)
@@ -293,17 +294,27 @@ class BodyProperties(Menu):
 
     def update_canvas(self):
         self.canvas.delete("all")
-        self.canvas.create_oval((2, 2, 102, 102))
-        for c in ((52, 2, 52, 102), (2, 52, 102, 52)):
+        ovaldims = [[3,10], 
+                    [103,113]]
+        od2 = [[ovaldims[0][0]/2, ovaldims[0][1]/2],
+               [ovaldims[1][0]/2,ovaldims[1][1]/2]]
+        self.canvas.create_oval((ovaldims[0][0], ovaldims[0][1], ovaldims[1][0], ovaldims[1][0]))
+        for c in ((ovaldims[1][0]/2, ovaldims[0][1], ovaldims[1][0]/2, ovaldims[1][1]), (ovaldims[0][0], ovaldims[1][1]/2, ovaldims[1][0], ovaldims[1][1]/2)):
             self.canvas.create_line(c, fill="Dark Gray", dash=(2, 2))
         for attr, color in ['velocity', 'blue'], ['acceleration', 'red']:
             a = getattr(self.body, attr)
-            if getattr(self, attr).get() and a != (
-                    0,
-                    0):  # If arrow is enabled and vector is not of length zero, draw the arrow using a logistic formula
+            if getattr(self, attr).get() and a != (0,0):  # If arrow is enabled and vector is not of length zero, draw the arrow using a logistic formula
+                self.canvas.create_line(
+                    ( (*od2[1]) , *((od2[1]) + 50 * (a.length()/C * C**(attr[0] != 'v')) * a.normalize())),
+                    fill=color, arrow="last")
+                
+                
+                '''
                 self.canvas.create_line(
                     (52, 52, *((52, 52) + 40 * (1 - 2 ** -(a.length() * 1000000 ** (attr[0] != 'v'))) * a.normalize())),
                     fill=color, arrow="last")
+                '''
+                
         self.canvas.grid(row=3, column=1, rowspan=2, columnspan=4)
 
     def merge(self):
@@ -311,11 +322,15 @@ class BodyProperties(Menu):
         self.mass_slider.config(to=self.body.mass0 * 10)
         self.density_slider.set(self.body.density)
         self.density_slider.config(to=self.body.density * 10)
+        
+        self.charge_slider.config(from_ = -abs(2*self.body.charge), to= abs(2*self.body.charge))
+        self.charge_slider.set(self.body.charge)
+        
 
     def update(self):
         self.root.update()
         try:
-            self.body.mass, self.body.density = self.mass_slider.get(), self.density_slider.get()
+            self.body.mass, self.body.density, self.body.charge = self.mass_slider.get(), self.density_slider.get(), self.charge_slider.get() 
         except:
             pass
         self.body.update_radius()
